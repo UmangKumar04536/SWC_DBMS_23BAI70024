@@ -1,0 +1,33 @@
+ques 1:
+
+WITH cte AS (
+    SELECT page_id,
+           status,
+           ROW_NUMBER() OVER (
+               PARTITION BY page_id
+               ORDER BY changed_at DESC, event_id DESC
+           ) AS rn
+    FROM page_status_log
+)
+SELECT COUNT(*) AS active_pages
+FROM cte
+WHERE rn = 1
+  AND status = 'active';
+
+
+
+ques 2:
+
+WITH cte AS (
+    SELECT advertising_channel,
+           MAX(money_spent) AS max_spend
+    FROM uber_advertising
+    WHERE customers_acquired > 1500
+    GROUP BY advertising_channel
+)
+SELECT advertising_channel
+FROM cte
+WHERE max_spend = (
+    SELECT MIN(max_spend)
+    FROM cte
+);
