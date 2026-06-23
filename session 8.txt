@@ -1,0 +1,49 @@
+Ques - 1:
+
+WITH avg_scores AS (
+    SELECT employee_id,
+          employee_name,
+          AVG(customer_satisfaction) AS avg_satisfaction
+    FROM amazon_support_tickets
+    WHERE resolution_status = 'Resolved'
+    GROUP BY employee_id, employee_name
+),
+ranked AS (
+    SELECT employee_id,
+          employee_name,
+          avg_satisfaction,
+          DENSE_RANK() OVER (
+              ORDER BY avg_satisfaction DESC
+          ) AS employee_rank
+    FROM avg_scores
+)
+SELECT employee_id,
+      employee_name,
+      avg_satisfaction,
+      employee_rank
+FROM ranked
+WHERE employee_rank <= 3
+ORDER BY employee_rank, employee_id;
+
+
+
+ques 2- 
+
+WITH cte AS (
+    SELECT department,
+           salary,
+           DENSE_RANK() OVER (
+               PARTITION BY department
+               ORDER BY salary DESC
+           ) AS rn
+    FROM (
+        SELECT DISTINCT department, salary
+        FROM twitter_employee
+    ) t
+)
+SELECT department,
+       salary
+FROM cte
+WHERE rn <= 3
+ORDER BY department, salary DESC;
+
