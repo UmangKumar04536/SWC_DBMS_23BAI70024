@@ -1,0 +1,60 @@
+ques -1 :
+
+WITH cte AS (
+    SELECT f.date,
+           SUM(
+               CASE
+                   WHEN a.paying_customer = 'no'
+                   THEN f.downloads
+                   ELSE 0
+               END
+           ) AS non_paying_downloads,
+           SUM(
+               CASE
+                   WHEN a.paying_customer = 'yes'
+                   THEN f.downloads
+                   ELSE 0
+               END
+           ) AS paying_downloads
+    FROM ms_download_facts f
+    JOIN ms_user_dimension u
+      ON f.user_id = u.user_id
+    JOIN ms_acc_dimension a
+      ON u.acc_id = a.acc_id
+    GROUP BY f.date
+)
+SELECT date,
+       non_paying_downloads,
+       paying_downloads
+FROM cte
+WHERE non_paying_downloads > paying_downloads
+ORDER BY date;
+
+
+ques- 2:
+
+WITH tasks AS (
+    SELECT DISTINCT start_time, end_time
+    FROM task_schedule
+    WHERE start_time IS NOT NULL
+      AND end_time IS NOT NULL
+),
+events AS (
+    SELECT start_time AS t, 1 AS delta
+    FROM tasks
+
+    UNION ALL
+
+    SELECT end_time AS t, -1 AS delta
+    FROM tasks
+),
+running AS (
+    SELECT t,
+           delta,
+           SUM(delta) OVER (
+               ORDER BY t, delta
+           ) AS cpus
+    FROM events
+)
+SELECT MAX(cpus) AS minimum_cpus
+FROM running;
